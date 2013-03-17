@@ -1,0 +1,9 @@
+bin2c
+ctmbench
+ctmconv
+ctmviewer
+jpeg/jconfig.h
+jpeg/libjpeg.a
+phong_*.h
+tinyxml/libtinyxml.a
+zlib/libz.a

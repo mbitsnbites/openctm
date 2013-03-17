@@ -1,3 +1,4 @@
+# -*- Mode: Makefile; tab-width: 4; indent-tabs-mode: t -*-
 ###############################################################################
 # Product:     OpenCTM
 # File:        Makefile.linux
@@ -5,7 +6,7 @@
 #              systems with gcc, e.g. OpenSolaris). Please use GNU make
 #              (called gmake on some systems).
 ###############################################################################
-# Copyright (c) 2009-2010 Marcus Geelnard
+# Copyright (c) 2009-2013 Marcus Geelnard
 #
 # This software is provided 'as-is', without any express or implied
 # warranty. In no event will the authors be held liable for any damages
@@ -35,6 +36,8 @@ CFLAGS_LZMA = -W -Wall -c -fPIC -DLZMA_PREFIX_CTM -std=c99 -pedantic
 RM = rm -f
 DEPEND = $(CPP) -MM
 LFLAGS = -shared
+AR       = ar
+ARFLAGS  = -rcs
 
 # To build a debug version, use: make -f Makefile.linux DEBUG=YES
 # The default is to build a release version.
@@ -55,6 +58,7 @@ endif
 CFLAGS += -fvisibility=hidden
 CFLAGS_LZMA += -fvisibility=hidden
 
+STATICLIB = libopenctm2.a
 DYNAMICLIB = libopenctm2.so
 
 OBJS = openctm2.o \
@@ -94,7 +98,10 @@ LZMA_SRCS = $(LZMADIR)/Alloc.c \
 all: $(DYNAMICLIB)
 
 clean:
-	$(RM) $(DYNAMICLIB) $(OBJS) $(LZMA_OBJS)
+	$(RM) $(STATICLIB) $(DYNAMICLIB) $(OBJS) $(LZMA_OBJS)
+
+$(STATICLIB): $(OBJS) $(LZMA_OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(LZMA_OBJS)
 
 $(DYNAMICLIB): $(OBJS) $(LZMA_OBJS)
 	$(CC) $(LFLAGS) -Wl,-soname,$@ -o $@ $(OBJS) $(LZMA_OBJS) -lm -lpthread

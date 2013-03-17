@@ -1,0 +1,111 @@
+###############################################################################
+# Product:     OpenCTM
+# File:        Makefile.linux
+# Description: Makefile for Linux systems (should work on most Un*x-like
+#              systems with gcc, e.g. OpenSolaris). Please use GNU make
+#              (called gmake on some systems).
+###############################################################################
+# Copyright (c) 2009-2010 Marcus Geelnard
+#
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the authors be held liable for any damages
+# arising from the use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+#
+#     1. The origin of this software must not be misrepresented; you must not
+#     claim that you wrote the original software. If you use this software
+#     in a product, an acknowledgment in the product documentation would be
+#     appreciated but is not required.
+#
+#     2. Altered source versions must be plainly marked as such, and must not
+#     be misrepresented as being the original software.
+#
+#     3. This notice may not be removed or altered from any source
+#     distribution.
+###############################################################################
+
+# Compiler settings etc.
+LZMADIR = liblzma
+CC = gcc
+CFLAGS = -W -Wall -c -fPIC -DOPENCTM_BUILD -I$(LZMADIR) -DLZMA_PREFIX_CTM -std=c99 -pedantic
+CFLAGS_LZMA = -W -Wall -c -fPIC -DLZMA_PREFIX_CTM -std=c99 -pedantic
+RM = rm -f
+DEPEND = $(CPP) -MM
+LFLAGS = -shared
+
+# To build a debug version, use: make -f Makefile.linux DEBUG=YES
+# The default is to build a release version.
+ifeq ($(RELEASE),YES)
+  DEBUG = NO
+endif
+ifeq ($(DEBUG),YES)
+  CFLAGS += -g
+  CFLAGS_LZMA += -g
+else
+  CFLAGS += -O3
+  CFLAGS_LZMA += -O3
+  LFLAGS += -s
+endif
+
+# Support for hiding private functions in the shared library (comment out for
+# GCC versions < 4.0)
+CFLAGS += -fvisibility=hidden
+CFLAGS_LZMA += -fvisibility=hidden
+
+DYNAMICLIB = libopenctm2.so
+
+OBJS = openctm2.o \
+       array.o \
+       stream.o \
+       compressRAW.o \
+       compressMG1.o \
+       compressMG2.o \
+       v5compat.o
+
+LZMA_OBJS = Alloc.o \
+            LzFind.o \
+            LzmaDec.o \
+            LzmaEnc.o \
+            LzmaLib.o \
+            LzFindMt.o \
+            Threads.o
+
+SRCS = openctm2.c \
+       array.c \
+       stream.c \
+       compressRAW.c \
+       compressMG1.c \
+       compressMG2.c \
+       v5compat.c
+
+LZMA_SRCS = $(LZMADIR)/Alloc.c \
+            $(LZMADIR)/LzFind.c \
+            $(LZMADIR)/LzmaDec.c \
+            $(LZMADIR)/LzmaEnc.c \
+            $(LZMADIR)/LzmaLib.c \
+            $(LZMADIR)/LzFindMt.c \
+            $(LZMADIR)/Threads.c
+
+.phony: all clean depend
+
+all: $(DYNAMICLIB)
+
+clean:
+	$(RM) $(DYNAMICLIB) $(OBJS) $(LZMA_OBJS)
+
+$(DYNAMICLIB): $(OBJS) $(LZMA_OBJS)
+	$(CC) $(LFLAGS) -Wl,-soname,$@ -o $@ $(OBJS) $(LZMA_OBJS) -lm -lpthread
+
+%.o: %.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+%.o: $(LZMADIR)/%.c
+	$(CC) $(CFLAGS_LZMA) -o $@ $<
+
+depend:
+	$(DEPEND) $(SRCS) $(LZMA_SRCS) > make.depend
+
+-include make.depend

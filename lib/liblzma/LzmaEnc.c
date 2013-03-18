@@ -2184,13 +2184,6 @@ SRes LzmaEnc_Encode(CLzmaEncHandle pp, ISeqOutStream *outStream, ISeqInStream *i
   CLzmaEnc *p = (CLzmaEnc *)pp;
   SRes res = SZ_OK;
 
-  #ifdef COMPRESS_MF_MT
-  Byte allocaDummy[0x300];
-  int i = 0;
-  for (i = 0; i < 16; i++)
-    allocaDummy[i] = (Byte)i;
-  #endif
-
   RINOK(LzmaEnc_Prepare(pp, inStream, outStream, alloc, allocBig));
 
   for (;;)

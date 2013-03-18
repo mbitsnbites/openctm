@@ -453,13 +453,14 @@ void MatchFinderMt_Destruct(CMatchFinderMt *p, ISzAlloc *alloc)
 #define kHashBufferSize (kMtHashBlockSize * kMtHashNumBlocks)
 #define kBtBufferSize (kMtBtBlockSize * kMtBtNumBlocks)
 
-static unsigned MY_STD_CALL HashThreadFunc2(void *p) { HashThreadFunc((CMatchFinderMt *)p);  return 0; }
+static unsigned MY_STD_CALL HashThreadFunc2(void *p)
+{
+  HashThreadFunc((CMatchFinderMt *)p);
+  return 0;
+}
+
 static unsigned MY_STD_CALL BtThreadFunc2(void *p)
 {
-  Byte allocaDummy[0x180];
-  int i = 0;
-  for (i = 0; i < 16; i++)
-    allocaDummy[i] = (Byte)i;
   BtThreadFunc((CMatchFinderMt *)p);
   return 0;
 }

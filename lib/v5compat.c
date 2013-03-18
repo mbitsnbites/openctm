@@ -28,7 +28,7 @@
 //
 //              FIXME: We can do much more code reuse here!
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -836,7 +836,7 @@ CTMbool _ctmConvertV5MG1Vertices(_CTMcontext * self)
   ptr = tmpArray;
   for(i = 0; i < self->mVertexCount; ++ i)
     for(k = 0; k < 3; ++ k)
-      *ptr ++ = _ctmGetArrayf(&self->mVertices, i, k);
+      *ptr ++ = self->mVertices.getf(&self->mVertices, i, k);
 
   // Copy the array back to the original array, in the correct order
   maxIdx = 3 * self->mVertexCount;
@@ -845,7 +845,7 @@ CTMbool _ctmConvertV5MG1Vertices(_CTMcontext * self)
   {
     for(k = 0; k < 3; ++ k)
     {
-      _ctmSetArrayf(&self->mVertices, i, k, tmpArray[idx]);
+      self->mVertices.setf(&self->mVertices, i, k, tmpArray[idx]);
       idx += 3;
       if(idx >= maxIdx)
         idx = idx - maxIdx + 1;

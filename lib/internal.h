@@ -3,7 +3,7 @@
 // File:        internal.h
 // Description: Internal (private) declarations, types and function prototypes.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -45,14 +45,35 @@
 #define _CTM_HAS_NORMALS_BIT 0x00000001
 
 //-----------------------------------------------------------------------------
+// Branch optimization macros
+//-----------------------------------------------------------------------------
+#if defined(__GNUC__)
+# define LIKELY(expr) __builtin_expect(!!(expr), 1)
+# define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
+#else
+# define LIKELY(expr) (expr)
+# define UNLIKELY(expr) (expr)
+#endif
+
+//-----------------------------------------------------------------------------
 // _CTMarray - Internal representation of a typed array.
 //-----------------------------------------------------------------------------
 typedef struct _CTMarray_struct _CTMarray;
+
+typedef CTMuint (*_CTMarraygetifn)(_CTMarray *, CTMuint, CTMuint);
+typedef CTMfloat (*_CTMarraygetffn)(_CTMarray *, CTMuint, CTMuint);
+typedef void (*_CTMarraysetifn)(_CTMarray *, CTMuint, CTMuint, CTMuint);
+typedef void (*_CTMarraysetffn)(_CTMarray *, CTMuint, CTMuint, CTMfloat);
+
 struct _CTMarray_struct {
-  void * mData;         // Pointer to the first element of the array
-  CTMenum mType;        // Data type
-  CTMuint mSize;        // Data size (number of components per element)
-  CTMuint mStride;      // Byte offset from one element to the next
+  void * mData;           // Pointer to the first element of the array
+  CTMenum mType;          // Data type
+  CTMuint mSize;          // Data size (number of components per element)
+  CTMuint mStride;        // Byte offset from one element to the next
+  _CTMarraygetifn geti;   // Integer getter function
+  _CTMarraygetffn getf;   // Float getter function
+  _CTMarraysetifn seti;   // Integer setter function
+  _CTMarraysetffn setf;   // Float setter function
 };
 
 //-----------------------------------------------------------------------------
@@ -157,10 +178,9 @@ typedef struct {
 //-----------------------------------------------------------------------------
 // Function prototypes for array.c
 //-----------------------------------------------------------------------------
-CTMuint _ctmGetArrayi(_CTMarray * aArray, CTMuint aElement, CTMuint aComponent);
-CTMfloat _ctmGetArrayf(_CTMarray * aArray, CTMuint aElement, CTMuint aComponent);
-void _ctmSetArrayi(_CTMarray * aArray, CTMuint aElement, CTMuint aComponent, CTMuint aValue);
-void _ctmSetArrayf(_CTMarray * aArray, CTMuint aElement, CTMuint aComponent, CTMfloat aValue);
+void _ctmClearArray(_CTMarray * aArray);
+CTMenum _ctmInitArray(_CTMarray * aArray, CTMuint aSize, CTMenum aType,
+  CTMuint aStride, void * aData);
 
 //-----------------------------------------------------------------------------
 // Function prototypes for stream.c

@@ -3,7 +3,7 @@
 // File:        stream.c
 // Description: Stream I/O functions.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -423,7 +423,7 @@ CTMbool _ctmStreamReadPackedFloatArray(_CTMcontext * self, _CTMarray * aArray,
                 (((CTMint) tmp[i + k * aCount + 2 * aCount * aSize]) << 8) |
                 (((CTMint) tmp[i + k * aCount + aCount * aSize]) << 16) |
                 (((CTMint) tmp[i + k * aCount]) << 24);
-      _ctmSetArrayf(aArray, i, k, value.f);
+      aArray->setf(aArray, i, k, value.f);
     }
   }
 
@@ -463,7 +463,7 @@ CTMbool _ctmStreamWritePackedFloatArray(_CTMcontext * self, _CTMarray * aArray,
   {
     for(k = 0; k < aSize; ++ k)
     {
-      value.f = _ctmGetArrayf(aArray, i, k);
+      value.f = aArray->getf(aArray, i, k);
       tmp[i + k * aCount + 3 * aCount * aSize] = value.i & 0x000000ff;
       tmp[i + k * aCount + 2 * aCount * aSize] = (value.i >> 8) & 0x000000ff;
       tmp[i + k * aCount + aCount * aSize] = (value.i >> 16) & 0x000000ff;

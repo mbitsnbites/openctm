@@ -3,7 +3,7 @@
 // File:        compressMG1.c
 // Description: Implementation of the MG1 compression method.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -162,7 +162,7 @@ CTMbool _ctmCompressMesh_MG1(_CTMcontext * self)
   }
   for(i = 0; i < self->mTriangleCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      indices[i * 3 + j] = _ctmGetArrayi(&self->mIndices, i, j);
+      indices[i * 3 + j] = self->mIndices.geti(&self->mIndices, i, j);
   _ctmReArrangeTriangles(self, indices);
 
   // Calculate index deltas (entropy-reduction)
@@ -277,7 +277,7 @@ CTMbool _ctmUncompressMesh_MG1(_CTMcontext * self)
   _ctmRestoreIndices(self, indices);
   for(i = 0; i < self->mTriangleCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      _ctmSetArrayi(&self->mIndices, i, j, indices[i * 3 + j]);
+      self->mIndices.seti(&self->mIndices, i, j, indices[i * 3 + j]);
 
   // Free temporary resources
   free(indices);

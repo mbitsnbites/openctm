@@ -3,7 +3,7 @@
 // File:        openctm2.c
 // Description: API functions.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2012 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -43,17 +43,6 @@
 //=============================================================================
 // Private internal helper functions.
 //=============================================================================
-
-//-----------------------------------------------------------------------------
-// _ctmClearArray() - Clear a typed array (set default values).
-//-----------------------------------------------------------------------------
-static void _ctmClearArray(_CTMarray * aArray)
-{
-  aArray->mData = (void *) 0;
-  aArray->mType = CTM_FLOAT;
-  aArray->mSize = 0;
-  aArray->mStride = 0;
-}
 
 //-----------------------------------------------------------------------------
 // _ctmAllocateFloatMaps()
@@ -242,7 +231,7 @@ static CTMint _ctmCheckMeshIntegrity(_CTMcontext * self)
   {
     for(j = 0; j < 3; ++ j)
     {
-      if(_ctmGetArrayi(&self->mIndices, i, j) >= self->mVertexCount)
+      if(self->mIndices.geti(&self->mIndices, i, j) >= self->mVertexCount)
         return CTM_FALSE;
     }
   }
@@ -252,9 +241,9 @@ static CTMint _ctmCheckMeshIntegrity(_CTMcontext * self)
   {
     for(j = 0; j < 3; ++ j)
     {
-      if(!isfinite(_ctmGetArrayf(&self->mVertices, i, j)))
+      if(!isfinite(self->mVertices.getf(&self->mVertices, i, j)))
         return CTM_FALSE;
-      if(self->mHasNormals && !isfinite(_ctmGetArrayf(&self->mNormals, i, j)))
+      if(self->mHasNormals && !isfinite(self->mNormals.getf(&self->mNormals, i, j)))
         return CTM_FALSE;
     }
   }
@@ -267,7 +256,7 @@ static CTMint _ctmCheckMeshIntegrity(_CTMcontext * self)
     {
       for(j = 0; j < 2; ++ j)
       {
-        if(!isfinite(_ctmGetArrayf(&map->mArray, i, j)))
+        if(!isfinite(map->mArray.getf(&map->mArray, i, j)))
           return CTM_FALSE;
       }
     }
@@ -282,7 +271,7 @@ static CTMint _ctmCheckMeshIntegrity(_CTMcontext * self)
     {
       for(j = 0; j < 4; ++ j)
       {
-        if(!isfinite(_ctmGetArrayf(&map->mArray, i, j)))
+        if(!isfinite(map->mArray.getf(&map->mArray, i, j)))
           return CTM_FALSE;
       }
     }
@@ -860,12 +849,12 @@ CTMEXPORT CTMenum CTMCALL ctmAddAttribMap(CTMcontext aContext,
 // ctmArrayPointer()
 //-----------------------------------------------------------------------------
 CTMEXPORT void CTMCALL ctmArrayPointer(CTMcontext aContext, CTMenum aTarget,
-  CTMuint aSize, CTMenum aType, CTMuint aStride, void * aArray)
+  CTMuint aSize, CTMenum aType, CTMuint aStride, void * aData)
 {
   _CTMcontext * self = (_CTMcontext *) aContext;
   _CTMfloatmap * map;
   _CTMarray * array = (_CTMarray *) 0;
-  CTMuint i, typeSize;
+  CTMuint i;
   if(!self) return;
 
   // Get the array handle for the selected target array, and check the aSize
@@ -903,7 +892,7 @@ CTMEXPORT void CTMCALL ctmArrayPointer(CTMcontext aContext, CTMenum aTarget,
     }
     array = &self->mNormals;
     if(self->mMode == CTM_EXPORT)
-      self->mHasNormals = aArray ? CTM_TRUE : CTM_FALSE;
+      self->mHasNormals = aData ? CTM_TRUE : CTM_FALSE;
   }
   else if((aTarget >= CTM_UV_MAP_1) && (aTarget <= CTM_UV_MAP_LAST))
   {
@@ -946,44 +935,10 @@ CTMEXPORT void CTMCALL ctmArrayPointer(CTMcontext aContext, CTMenum aTarget,
     return;
   }
 
-  // Check type
-  switch(aType)
-  {
-    case CTM_BYTE:
-    case CTM_UBYTE:
-      typeSize = sizeof(CTMbyte);
-      break;
-    case CTM_SHORT:
-    case CTM_USHORT:
-      typeSize = sizeof(CTMshort);
-      break;
-    case CTM_INT:
-    case CTM_UINT:
-      typeSize = sizeof(CTMint);
-      break;
-    case CTM_FLOAT:
-      typeSize = sizeof(CTMfloat);
-      break;
-    case CTM_DOUBLE:
-      typeSize = sizeof(CTMdouble);
-      break;
-    default:
-      self->mError = CTM_INVALID_ARGUMENT;
-      return;
-  }
-
-  // Define array
-  if(array)
-  {
-    array->mData = aArray;
-    array->mType = aType;
-    array->mSize = aSize;
-    if(aStride > 0)
-      array->mStride = aStride;
-    else
-    {
-      array->mStride = aSize * typeSize;
-    }
+  // Set up array
+  CTMenum err = _ctmInitArray(array, aSize, aType, aStride, aData);
+  if (err != CTM_NONE) {
+    self->mError = err;
   }
 }
 
@@ -1226,13 +1181,13 @@ CTMEXPORT void CTMCALL ctmVertexPrecisionRel(CTMcontext aContext,
   for(i = 0; i < self->mTriangleCount; ++ i)
   {
     for(j = 0; j < 3; ++ j)
-      idx[j] = _ctmGetArrayi(&self->mIndices, i, j);
+      idx[j] = self->mIndices.geti(&self->mIndices, i, j);
     for(k = 0; k < 3; ++ k)
-      p1[k] = _ctmGetArrayf(&self->mVertices, idx[2], k);
+      p1[k] = self->mVertices.getf(&self->mVertices, idx[2], k);
     for(j = 0; j < 3; ++ j)
     {
       for(k = 0; k < 3; ++ k)
-        p2[k] = _ctmGetArrayf(&self->mVertices, idx[j], k);
+        p2[k] = self->mVertices.getf(&self->mVertices, idx[j], k);
       avgEdgeLength += sqrtf((p2[0] - p1[0]) * (p2[0] - p1[0]) +
                              (p2[1] - p1[1]) * (p2[1] - p1[1]) +
                              (p2[2] - p1[2]) * (p2[2] - p1[2]));

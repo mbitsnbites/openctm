@@ -3,7 +3,7 @@
 // File:        compressMG2.c
 // Description: Implementation of the MG2 compression method.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -77,13 +77,13 @@ static void _ctmSetupGrid(_CTMcontext * self, _CTMgrid * aGrid)
   CTMfloat p[3], factor[3], sum, wantedGrids;
 
   // Calculate the mesh bounding box
-  aGrid->mMin[0] = aGrid->mMax[0] = _ctmGetArrayf(&self->mVertices, 0, 0);
-  aGrid->mMin[1] = aGrid->mMax[1] = _ctmGetArrayf(&self->mVertices, 0, 1);
-  aGrid->mMin[2] = aGrid->mMax[2] = _ctmGetArrayf(&self->mVertices, 0, 2);
+  aGrid->mMin[0] = aGrid->mMax[0] = self->mVertices.getf(&self->mVertices, 0, 0);
+  aGrid->mMin[1] = aGrid->mMax[1] = self->mVertices.getf(&self->mVertices, 0, 1);
+  aGrid->mMin[2] = aGrid->mMax[2] = self->mVertices.getf(&self->mVertices, 0, 2);
   for(i = 1; i < self->mVertexCount; ++ i)
   {
     for(j = 0; j < 3; ++ j)
-      p[j] = _ctmGetArrayf(&self->mVertices, i, j);
+      p[j] = self->mVertices.getf(&self->mVertices, i, j);
     if(p[0] < aGrid->mMin[0])
       aGrid->mMin[0] = p[0];
     else if(p[0] > aGrid->mMax[0])
@@ -210,7 +210,7 @@ static void _ctmSortVertices(_CTMcontext * self, _CTMsortvertex * aSortVertices,
   {
     // Store vertex properties in the sort vertex array
     for(j = 0; j < 3; ++ j)
-      p[j] = _ctmGetArrayf(&self->mVertices, i, j);
+      p[j] = self->mVertices.getf(&self->mVertices, i, j);
     aSortVertices[i].x = p[0];
     aSortVertices[i].mGridIndex = _ctmPointToGridIdx(aGrid, p);
     aSortVertices[i].mOriginalIndex = i;
@@ -245,7 +245,7 @@ static CTMbool _ctmReIndexIndices(_CTMcontext * self,
   ptr = aIndices;
   for(i = 0; i < self->mTriangleCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      *ptr ++ = indexLUT[_ctmGetArrayi(&self->mIndices, i, j)];
+      *ptr ++ = indexLUT[self->mIndices.geti(&self->mIndices, i, j)];
 
   // Free temporary lookup-array
   free((void *) indexLUT);
@@ -389,7 +389,7 @@ static void _ctmMakeVertexDeltas(_CTMcontext * self, CTMint * aIntVertices,
 
     // Get vertex coordinate
     for(j = 0; j < 3; ++ j)
-      p[j] = _ctmGetArrayf(&self->mVertices, oldIdx, j);
+      p[j] = self->mVertices.getf(&self->mVertices, oldIdx, j);
     
     // Store delta to the grid box origin in the integer vertex array. For the
     // X axis (which is sorted) we also do the delta to the previous coordinate
@@ -582,7 +582,7 @@ static CTMbool _ctmMakeNormalDeltas(_CTMcontext * self, CTMint * aIntNormals,
 
     // Get the normal
     for(j = 0; j < 3; ++ j)
-      n0[j] = _ctmGetArrayf(&self->mNormals, oldIdx, j);
+      n0[j] = self->mNormals.getf(&self->mNormals, oldIdx, j);
 
     // Calculate normal magnitude (should always be 1.0 for unit length normals)
     magn = sqrtf(n0[0] * n0[0] + n0[1] * n0[1] + n0[2] * n0[2]);
@@ -690,7 +690,7 @@ static CTMbool _ctmRestoreNormals(_CTMcontext * self, CTMuint * aIndices,
 
     // Apply normal magnitude, and output to the normals array
     for(j = 0; j < 3; ++ j)
-      _ctmSetArrayf(&self->mNormals, i, j, n[j] * magn);
+      self->mNormals.setf(&self->mNormals, i, j, n[j] * magn);
   }
 
   // Free temporary resources
@@ -721,8 +721,8 @@ static void _ctmMakeUVCoordDeltas(_CTMcontext * self, _CTMfloatmap * aMap,
     oldIdx = aSortVertices[i].mOriginalIndex;
 
     // Convert to fixed point
-    u = (CTMint) floorf(scale * _ctmGetArrayf(&aMap->mArray, oldIdx, 0) + 0.5f);
-    v = (CTMint) floorf(scale * _ctmGetArrayf(&aMap->mArray, oldIdx, 1) + 0.5f);
+    u = (CTMint) floorf(scale * aMap->mArray.getf(&aMap->mArray, oldIdx, 0) + 0.5f);
+    v = (CTMint) floorf(scale * aMap->mArray.getf(&aMap->mArray, oldIdx, 1) + 0.5f);
 
     // Calculate delta and store it in the converted array. NOTE: Here we rely
     // on the fact that vertices are sorted, and usually close to each other,
@@ -758,8 +758,8 @@ static void _ctmRestoreUVCoords(_CTMcontext * self, _CTMfloatmap * aMap,
     v = aIntUVCoords[i * 2 + 1] + prevV;
 
     // Convert to floating point
-    _ctmSetArrayf(&aMap->mArray, i, 0, (CTMfloat) u * scale);
-    _ctmSetArrayf(&aMap->mArray, i, 1, (CTMfloat) v * scale);
+    aMap->mArray.setf(&aMap->mArray, i, 0, (CTMfloat) u * scale);
+    aMap->mArray.setf(&aMap->mArray, i, 1, (CTMfloat) v * scale);
 
     prevU = u;
     prevV = v;
@@ -796,7 +796,7 @@ static void _ctmMakeAttribDeltas(_CTMcontext * self, _CTMfloatmap * aMap,
     // the geometry)...
     for(j = 0; j < 4; ++ j)
     {
-      value[j] = (CTMint) floorf(scale * _ctmGetArrayf(&aMap->mArray, oldIdx, j) + 0.5f);
+      value[j] = (CTMint) floorf(scale * aMap->mArray.getf(&aMap->mArray, oldIdx, j) + 0.5f);
       aIntAttribs[i * 4 + j] = value[j] - prev[j];
       prev[j] = value[j];
     }
@@ -827,7 +827,7 @@ static void _ctmRestoreAttribs(_CTMcontext * self, _CTMfloatmap * aMap,
     for(j = 0; j < 4; ++ j)
     {
       value[j] = aIntAttribs[i * 4 + j] + prev[j];
-      _ctmSetArrayf(&aMap->mArray, i, j, (CTMfloat) value[j] * scale);
+      aMap->mArray.setf(&aMap->mArray, i, j, (CTMfloat) value[j] * scale);
       prev[j] = value[j];
     }
   }
@@ -1263,7 +1263,7 @@ CTMbool _ctmUncompressMesh_MG2(_CTMcontext * self)
   fPtr = vertices;
   for(i = 0; i < self->mVertexCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      _ctmSetArrayf(&self->mVertices, i, j, *fPtr ++);
+      self->mVertices.setf(&self->mVertices, i, j, *fPtr ++);
   if(!self->mHasNormals)
   {
     free((void *) vertices);
@@ -1315,7 +1315,7 @@ CTMbool _ctmUncompressMesh_MG2(_CTMcontext * self)
         if(vertices) free((void *) vertices);
         return CTM_FALSE;
       }
-      _ctmSetArrayi(&self->mIndices, i, j, idx);
+      self->mIndices.seti(&self->mIndices, i, j, idx);
     }
   }
 

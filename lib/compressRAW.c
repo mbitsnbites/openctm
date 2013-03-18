@@ -3,7 +3,7 @@
 // File:        compressRAW.c
 // Description: Implementation of the RAW compression method.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -51,7 +51,7 @@ CTMbool _ctmCompressMesh_RAW(_CTMcontext * self)
   _ctmStreamWrite(self, (void *) "INDX", 4);
   for(i = 0; i < self->mTriangleCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      _ctmStreamWriteUINT(self, _ctmGetArrayi(&self->mIndices, i, j));
+      _ctmStreamWriteUINT(self, self->mIndices.geti(&self->mIndices, i, j));
 
   // The vertex data format is the same as for all frames
   return _ctmCompressFrame_RAW(self);
@@ -76,7 +76,7 @@ CTMbool _ctmCompressFrame_RAW(_CTMcontext * self)
   _ctmStreamWrite(self, (void *) "VERT", 4);
   for(i = 0; i < self->mVertexCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      _ctmStreamWriteFLOAT(self, _ctmGetArrayf(&self->mVertices, i, j));
+      _ctmStreamWriteFLOAT(self, self->mVertices.getf(&self->mVertices, i, j));
 
   // Write normals
   if(self->mHasNormals)
@@ -87,7 +87,7 @@ CTMbool _ctmCompressFrame_RAW(_CTMcontext * self)
     _ctmStreamWrite(self, (void *) "NORM", 4);
     for(i = 0; i < self->mVertexCount; ++ i)
       for(j = 0; j < 3; ++ j)
-        _ctmStreamWriteFLOAT(self, _ctmGetArrayf(&self->mNormals, i, j));
+        _ctmStreamWriteFLOAT(self, self->mNormals.getf(&self->mNormals, i, j));
   }
 
   // Write UV maps
@@ -100,7 +100,7 @@ CTMbool _ctmCompressFrame_RAW(_CTMcontext * self)
     _ctmStreamWrite(self, (void *) "TEXC", 4);
     for(i = 0; i < self->mVertexCount; ++ i)
       for(j = 0; j < 2; ++ j)
-        _ctmStreamWriteFLOAT(self, _ctmGetArrayf(&map->mArray, i, j));
+        _ctmStreamWriteFLOAT(self, map->mArray.getf(&map->mArray, i, j));
     map = map->mNext;
   }
 
@@ -114,7 +114,7 @@ CTMbool _ctmCompressFrame_RAW(_CTMcontext * self)
     _ctmStreamWrite(self, (void *) "ATTR", 4);
     for(i = 0; i < self->mVertexCount; ++ i)
       for(j = 0; j < 4; ++ j)
-        _ctmStreamWriteFLOAT(self, _ctmGetArrayf(&map->mArray, i, j));
+        _ctmStreamWriteFLOAT(self, map->mArray.getf(&map->mArray, i, j));
     map = map->mNext;
   }
 
@@ -139,7 +139,7 @@ CTMbool _ctmUncompressMesh_RAW(_CTMcontext * self)
   }
   for(i = 0; i < self->mTriangleCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      _ctmSetArrayi(&self->mIndices, i, j, _ctmStreamReadUINT(self));
+      self->mIndices.seti(&self->mIndices, i, j, _ctmStreamReadUINT(self));
 
   // The vertex data format is the same as for all frames
   return _ctmUncompressFrame_RAW(self);
@@ -163,7 +163,7 @@ CTMbool _ctmUncompressFrame_RAW(_CTMcontext * self)
   }
   for(i = 0; i < self->mVertexCount; ++ i)
     for(j = 0; j < 3; ++ j)
-      _ctmSetArrayf(&self->mVertices, i, j, _ctmStreamReadFLOAT(self));
+      self->mVertices.setf(&self->mVertices, i, j, _ctmStreamReadFLOAT(self));
 
   // Read normals
   if(self->mHasNormals)
@@ -175,7 +175,7 @@ CTMbool _ctmUncompressFrame_RAW(_CTMcontext * self)
     }
     for(i = 0; i < self->mVertexCount; ++ i)
       for(j = 0; j < 3; ++ j)
-        _ctmSetArrayf(&self->mNormals, i, j, _ctmStreamReadFLOAT(self));
+        self->mNormals.setf(&self->mNormals, i, j, _ctmStreamReadFLOAT(self));
   }
 
   // Read UV maps
@@ -189,7 +189,7 @@ CTMbool _ctmUncompressFrame_RAW(_CTMcontext * self)
     }
     for(i = 0; i < self->mVertexCount; ++ i)
       for(j = 0; j < 2; ++ j)
-        _ctmSetArrayf(&map->mArray, i, j, _ctmStreamReadFLOAT(self));
+        map->mArray.setf(&map->mArray, i, j, _ctmStreamReadFLOAT(self));
     map = map->mNext;
   }
 
@@ -204,7 +204,7 @@ CTMbool _ctmUncompressFrame_RAW(_CTMcontext * self)
     }
     for(i = 0; i < self->mVertexCount; ++ i)
       for(j = 0; j < 4; ++ j)
-        _ctmSetArrayf(&map->mArray, i, j, _ctmStreamReadFLOAT(self));
+        map->mArray.setf(&map->mArray, i, j, _ctmStreamReadFLOAT(self));
     map = map->mNext;
   }
 

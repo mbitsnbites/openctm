@@ -179,7 +179,7 @@ void _ctmStreamWriteSTRING(_CTMcontext * self, const char * aValue)
 #endif
 
 //-----------------------------------------------------------------------------
-// _ctmStreamReadPackedInts() - Read an compressed binary integer data array
+// _ctmStreamReadPackedInts() - Read a compressed binary integer data array
 // from a stream, and uncompress it.
 //-----------------------------------------------------------------------------
 CTMbool _ctmStreamReadPackedInts(_CTMcontext * self, CTMint * aData,
@@ -358,7 +358,7 @@ CTMbool _ctmStreamWritePackedInts(_CTMcontext * self, CTMint * aData,
 #endif
 
 //-----------------------------------------------------------------------------
-// _ctmStreamReadPackedFloatArray() - Read an compressed binary float data
+// _ctmStreamReadPackedFloatArray() - Read a compressed binary float data
 // array from a stream, and uncompress it.
 //-----------------------------------------------------------------------------
 CTMbool _ctmStreamReadPackedFloatArray(_CTMcontext * self, _CTMarray * aArray,

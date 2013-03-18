@@ -284,7 +284,7 @@ CTMEXPORT CTMcontext CTMCALL ctmNewContext(CTMenum aMode);
 CTMEXPORT void CTMCALL ctmFreeContext(CTMcontext aContext);
 
 /// Returns the latest error. Calling this function will return the last
-/// produced error code, or CTM_NO_ERROR (zero) if no error has occured since
+/// produced error code, or CTM_NONE (zero) if no error has occured since
 /// the last call to ctmGetError(). When this function is called, the internal
 /// error varibale will be reset to CTM_NONE.
 /// @param[in] aContext An OpenCTM context that has been created by
@@ -493,14 +493,14 @@ CTMEXPORT CTMenum CTMCALL ctmAddAttribMap(CTMcontext aContext,
 ///             understood to be tightly packed in the array (e.g. for a packed
 ///             four component CTM_UCHAR array, specifying a stride of zero is
 ///             equal to specifying a stride of 4).
-/// @param[in] aArray Pointer to the first element of the array.
+/// @param[in] aData Pointer to the first element of the array.
 /// @note When defining an UV map (CTM_UV_MAP_x) or an attribute map
 ///        (CTM_ATTRIB_MAP_x) for an export context, the corresponding map must
 ///        first have been created by a call to ctmAddUVMap() or
 ///        ctmAddAttribMap(), respectively.
 /// @see CTMenum
 CTMEXPORT void CTMCALL ctmArrayPointer(CTMcontext aContext, CTMenum aTarget,
-  CTMuint aSize, CTMenum aType, CTMuint aStride, void * aArray);
+  CTMuint aSize, CTMenum aType, CTMuint aStride, void * aData);
 
 /// Set the file comment for the given OpenCTM context.
 /// @param[in] aContext An OpenCTM context that has been created by

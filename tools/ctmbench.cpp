@@ -5,7 +5,7 @@
 //              hack used for development and testing. To change the compression
 //              parameters for the save benchmarks, a recompile is required.
 //-----------------------------------------------------------------------------
-// Copyright (c) 2009-2010 Marcus Geelnard
+// Copyright (c) 2009-2013 Marcus Geelnard
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -30,10 +30,18 @@
 #include <stdexcept>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 #include <openctm2.h>
 #include "systimer.h"
 
 using namespace std;
+
+struct Vertex {
+  float position[3];
+  float normal[3];
+  float uv[2];
+  float color[4];
+};
 
 
 //-----------------------------------------------------------------------------
@@ -44,6 +52,7 @@ void BenchmarkLoads(int aIterations, const char * aFileName, double &tMin,
   double &tMax, double &tTotal)
 {
   SysTimer timer;
+  CTMuint numTriangles = 0, numVertices = 0;
 
   // Iterate...
   cout << "Doing " << aIterations << " load iterations..." << endl << flush;
@@ -54,10 +63,39 @@ void BenchmarkLoads(int aIterations, const char * aFileName, double &tMin,
     // Start the timer
     timer.Push();
 
-    // Load the file
+    // Load the file header
     ctm.OpenReadFile(aFileName);
-    CTMuint frameCount = ctm.GetInteger(CTM_FRAME_COUNT);
+
+    // Allocate memory for the indices
+    numTriangles = ctm.GetInteger(CTM_TRIANGLE_COUNT);
+    vector<unsigned int> indices(numTriangles * 3);
+
+    // Allocate memory for the vertices
+    numVertices = ctm.GetInteger(CTM_VERTEX_COUNT);
+    vector<Vertex> vertices(numVertices);
+
+    // Set up array pointers
+    ctm.ArrayPointer(CTM_INDICES, 3, CTM_UINT, 0, &indices[0]);
+    ctm.ArrayPointer(CTM_VERTICES, 3, CTM_FLOAT, sizeof(Vertex), &vertices[0].position);
+    if(ctm.GetBoolean(CTM_HAS_NORMALS) == CTM_TRUE)
+    {
+      ctm.ArrayPointer(CTM_NORMALS, 3, CTM_FLOAT, sizeof(Vertex), &vertices[0].normal);
+    }
+    if(ctm.GetInteger(CTM_UV_MAP_COUNT) > 0)
+    {
+      ctm.ArrayPointer(CTM_UV_MAP_1, 2, CTM_FLOAT, sizeof(Vertex), &vertices[0].uv);
+    }
+    CTMenum colorAttrib = ctm.GetNamedAttribMap("Color");
+    if(colorAttrib != CTM_NONE)
+    {
+      ctm.ArrayPointer(colorAttrib, 4, CTM_FLOAT, sizeof(Vertex), &vertices[0].color);
+    }
+
+    // Read the first frame
     ctm.ReadMesh();
+
+    // Read the remaining frames
+    CTMuint frameCount = ctm.GetInteger(CTM_FRAME_COUNT);
     for(CTMuint j = 1; j < frameCount; ++ j)
       ctm.ReadNextFrame();
 
@@ -75,6 +113,9 @@ void BenchmarkLoads(int aIterations, const char * aFileName, double &tMin,
     }
     tTotal += t;
   }
+
+  cout << "Mesh size: " << numTriangles << " triangles, " << numVertices <<
+      " vertices" << endl << flush;
 }
 
 
